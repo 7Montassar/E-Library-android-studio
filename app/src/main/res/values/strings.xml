@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">E-Library</string>
+    <string name="don_t_have_an_account_sign_up_here">Don\'t have an account? Sign up here</string>
+    <string name="sign_in">Sign In</string>
+    <string name="select_a_category">Select a category</string>
+</resources>
