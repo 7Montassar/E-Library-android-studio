@@ -64,10 +64,7 @@
                 android:layout_height="wrap_content"
                 android:text="Collections"/>
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Recent"/>
+
         </com.google.android.material.tabs.TabLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -87,5 +84,33 @@
         app:backgroundTint="@color/colorPrimary"
         app:tint="@color/white"
         android:visibility="gone"/>
+
+    <!-- Modern Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom"
+        android:background="#0d2237"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"/>
+
+    <!-- Floating Action Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addBookFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:backgroundTint="#0d2237"
+        android:contentDescription="Add Book"
+        android:src="@drawable/ic_add"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        app:layout_anchor="@id/bottomNavigationView"
+        app:layout_anchorGravity="center"
+        app:maxImageSize="24dp"
+        app:tint="@color/white"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -89,6 +89,12 @@ public class AddBookActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
+            if (item.getItemId() == R.id.navigation_library) {
+                Intent intent = new Intent(this, LibraryActivity.class);
+                startActivity(intent);
+                finish();
+                return true;
+            }
             return false;
         });
     }

@@ -114,15 +114,15 @@ public class BookDetailsActivity extends AppCompatActivity {
         progressDialog.setIndeterminate(true);
         progressDialog.show();
 
+        // First download the PDF
         apiService.downloadBookPdf(bookId, userId).enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                progressDialog.dismiss();
                 if (response.isSuccessful() && response.body() != null) {
-                    savePdfToStorage(response.body());
-                    // refresh book details to update download count
-                    loadBookDetails();
+                    // Save PDF and then add to downloads
+                    savePdfAndAddToDownloads(response.body(), progressDialog);
                 } else {
+                    progressDialog.dismiss();
                     handleError("Failed to download book");
                 }
             }
@@ -135,13 +135,13 @@ public class BookDetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void savePdfToStorage(final ResponseBody body) {
+    private void savePdfAndAddToDownloads(final ResponseBody body, ProgressDialog progressDialog) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
             try {
-                // Create a valid filename by removing special characters
+                // Save PDF file logic (your existing code)
                 String safeTitle = bookTitle.replaceAll("[^a-zA-Z0-9]", "_");
                 String safeAuthor = bookAuthor.replaceAll("[^a-zA-Z0-9]", "_");
                 String fileName = safeTitle + "_" + safeAuthor + ".pdf";
@@ -149,40 +149,63 @@ public class BookDetailsActivity extends AppCompatActivity {
                 File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 File file = new File(downloadsDir, fileName);
 
-                InputStream inputStream = null;
-                OutputStream outputStream = null;
+                boolean savedSuccessfully = false;
 
-                try {
+                try (InputStream inputStream = body.byteStream();
+                     OutputStream outputStream = new FileOutputStream(file)) {
+
                     byte[] fileReader = new byte[4096];
                     long fileSize = body.contentLength();
                     long fileSizeDownloaded = 0;
 
-                    inputStream = body.byteStream();
-                    outputStream = new FileOutputStream(file);
-
                     while (true) {
                         int read = inputStream.read(fileReader);
-                        if (read == -1) {
-                            break;
-                        }
+                        if (read == -1) break;
                         outputStream.write(fileReader, 0, read);
                         fileSizeDownloaded += read;
                     }
 
                     outputStream.flush();
+                    savedSuccessfully = true;
+                }
 
-                    // Update UI on main thread
+                // If PDF was saved successfully, add to downloads
+                if (savedSuccessfully) {
                     handler.post(() -> {
-                        Toast.makeText(BookDetailsActivity.this,
-                                "PDF saved to Downloads folder",
-                                Toast.LENGTH_LONG).show();
+                        // Create download info
+                        JsonObject downloadInfo = new JsonObject();
+                        downloadInfo.addProperty("userId", sessionManager.getUserId());
+                        downloadInfo.addProperty("bookId", bookId);
+                        downloadInfo.addProperty("totalPages", 0); // You can update this later
+                        downloadInfo.addProperty("lastPageRead", 0);
+                        downloadInfo.addProperty("readingProgress", 0.0f);
+
+                        // Add to downloads table
+                        apiService.addToDownloads(bookId, downloadInfo).enqueue(new Callback<JsonObject>() {
+                            @Override
+                            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                progressDialog.dismiss();
+                                if (response.isSuccessful()) {
+                                    Toast.makeText(BookDetailsActivity.this,
+                                            "Book downloaded and added to your library",
+                                            Toast.LENGTH_LONG).show();
+                                    loadBookDetails(); // Refresh to update download count
+                                } else {
+                                    handleError("Book downloaded but failed to add to library");
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<JsonObject> call, Throwable t) {
+                                progressDialog.dismiss();
+                                handleError("Book downloaded but failed to add to library: " + t.getMessage());
+                            }
+                        });
                     });
-                } finally {
-                    if (inputStream != null) inputStream.close();
-                    if (outputStream != null) outputStream.close();
                 }
             } catch (IOException e) {
                 handler.post(() -> {
+                    progressDialog.dismiss();
                     handleError("Error saving PDF: " + e.getMessage());
                 });
             }

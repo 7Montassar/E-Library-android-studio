@@ -173,14 +173,14 @@
                 if (itemId == R.id.navigation_home) {
                     return true;
                 } else if (itemId == R.id.navigation_library) {
-                    // TODO: Implement search functionality
-                    return true;
+                    Intent intent = new Intent(HomeActivity.this, LibraryActivity.class);
+                    startActivity(intent);
+                    finish();
                 }
                 return false;
             });
 
             addBookFab.setOnClickListener(v -> {
-                // TODO: Navigate to AddBookActivity
                  Intent intent = new Intent(HomeActivity.this, AddBookActivity.class);
                  startActivity(intent);
                  finish();
